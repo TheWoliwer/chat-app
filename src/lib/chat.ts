@@ -203,3 +203,179 @@ export function subscribeToMessages(conversationId: string, callback: (message: 
     )
     .subscribe();
 }
+
+// Yazma durumunu paylaşma ve dinleme
+export async function updateTypingStatus(conversationId: string, profileId: string, isTyping: boolean) {
+  try {
+    // Gerçek zamanlı olarak "typing_status" kanalına mesaj gönderiyoruz
+    await supabase
+      .channel(`typing:${conversationId}`)
+      .send({
+        type: 'broadcast',
+        event: 'typing',
+        payload: {
+          profile_id: profileId,
+          is_typing: isTyping,
+          conversation_id: conversationId
+        }
+      });
+    
+    return { success: true };
+  } catch (error) {
+    console.error('Yazma durumu güncellenirken hata:', error);
+    return { success: false, error };
+  }
+}
+
+// Yazma durumunu dinlemek için
+export function subscribeToTypingStatus(conversationId: string, callback: (status: {profile_id: string, is_typing: boolean}) => void) {
+  return supabase
+    .channel(`typing:${conversationId}`)
+    .on('broadcast', { event: 'typing' }, (payload) => {
+      callback(payload.payload);
+    })
+    .subscribe();
+}
+
+// Mesajın okundu durumunu güncelleme
+export async function markMessageAsRead(messageId: string) {
+  try {
+    const { data, error } = await supabase
+      .from('messages')
+      .update({ read: true, read_at: new Date().toISOString() })
+      .eq('id', messageId);
+
+    if (error) throw error;
+    return { success: true };
+  } catch (error) {
+    console.error('Mesaj okundu olarak işaretlenirken hata:', error);
+    return { success: false, error };
+  }
+}
+
+// Konuşmadaki tüm mesajları okundu olarak işaretle
+export async function markAllConversationMessagesAsRead(conversationId: string, userId: string) {
+  try {
+    const { data, error } = await supabase
+      .from('messages')
+      .update({ read: true, read_at: new Date().toISOString() })
+      .eq('conversation_id', conversationId)
+      .neq('profile_id', userId) // Kendi mesajlarımızı hariç tut
+      .eq('read', false);
+
+    if (error) throw error;
+    return { success: true };
+  } catch (error) {
+    console.error('Konuşma mesajları okundu olarak işaretlenirken hata:', error);
+    return { success: false, error };
+  }
+}
+
+// Okunmamış mesaj sayısını getir
+export async function getUnreadMessagesCount(conversationId: string, userId: string) {
+  try {
+    const { data, error, count } = await supabase
+      .from('messages')
+      .select('*', { count: 'exact' })
+      .eq('conversation_id', conversationId)
+      .neq('profile_id', userId)
+      .eq('read', false);
+
+    if (error) throw error;
+    return { success: true, count };
+  } catch (error) {
+    console.error('Okunmamış mesaj sayısı alınırken hata:', error);
+    return { success: false, error, count: 0 };
+  }
+}
+
+// Mesaja yanıt verme fonksiyonu
+export async function replyToMessage(conversationId: string, profileId: string, content: string, replyToMessageId: string) {
+  try {
+    const { data, error } = await supabase
+      .from('messages')
+      .insert({
+        conversation_id: conversationId,
+        profile_id: profileId,
+        content,
+        reply_to_message_id: replyToMessageId
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Konuşma güncelleme zamanını da güncelleyelim
+    await supabase
+      .from('conversations')
+      .update({ updated_at: new Date().toISOString() })
+      .eq('id', conversationId);
+
+    return { success: true, message: data };
+  } catch (error) {
+    console.error('Mesaja yanıt verilirken hata:', error);
+    return { success: false, error };
+  }
+}
+
+// Yanıtlanan mesajın bilgilerini getir
+export async function getReplyMessage(messageId: string) {
+  try {
+    const { data, error } = await supabase
+      .from('messages')
+      .select(`
+        *,
+        profile:profile_id (id, username, full_name, avatar_url)
+      `)
+      .eq('id', messageId)
+      .single();
+
+    if (error) throw error;
+    return { success: true, message: data };
+  } catch (error) {
+    console.error('Yanıtlanan mesaj getirilirken hata:', error);
+    return { success: false, error };
+  }
+}
+
+// Çevrimiçi durumunu güncelleme
+export async function updateOnlineStatus(profileId: string, isOnline: boolean) {
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .update({ 
+        online_status: isOnline,
+        last_seen_at: new Date().toISOString()
+      })
+      .eq('id', profileId);
+
+    if (error) throw error;
+    return { success: true };
+  } catch (error) {
+    console.error('Çevrimiçi durumu güncellenirken hata:', error);
+    return { success: false, error };
+  }
+}
+
+// Çevrimiçi durumlarını dinleme
+export function subscribeToOnlineStatus(profileIds: string[], callback: (status: {profile_id: string, online_status: boolean, last_seen_at: string}) => void) {
+  return supabase
+    .channel('online-status')
+    .on(
+      'postgres_changes',
+      {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'profiles',
+        filter: `id=in.(${profileIds.join(',')})`,
+      },
+      (payload) => {
+        callback({
+          profile_id: payload.new.id,
+          online_status: payload.new.online_status,
+          last_seen_at: payload.new.last_seen_at
+        });
+      }
+    )
+    .subscribe();
+}

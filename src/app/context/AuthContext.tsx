@@ -41,18 +41,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loadUser();
   }, []);
 
-  const login = async (email: string, password: string) => {
-    try {
-      const { success, user, error } = await signIn(email, password);
-      if (success && user) {
-        const { user: fullUser } = await getCurrentUser();
-        setUser(fullUser as User);
+// AuthContext.tsx içindeki login fonksiyonuna ekleyin:
+const login = async (email: string, password: string) => {
+  try {
+    const { success, user, error } = await signIn(email, password);
+    if (success && user) {
+      const { user: fullUser } = await getCurrentUser();
+      setUser(fullUser as User);
+      
+      // Çevrimiçi durumunu güncelle
+      if (fullUser) {
+        await updateOnlineStatus(fullUser.id, true);
       }
-      return { success, error };
-    } catch (error) {
-      return { success: false, error };
     }
-  };
+    return { success, error };
+  } catch (error) {
+    return { success: false, error };
+  }
+};
 
   const register = async (email: string, password: string, username: string, fullName: string) => {
     try {
@@ -63,17 +69,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const logout = async () => {
-    try {
-      const { success, error } = await signOut();
-      if (success) {
-        setUser(null);
-      }
-      return { success, error };
-    } catch (error) {
-      return { success: false, error };
+// logout fonksiyonuna da ekleyin:
+const logout = async () => {
+  try {
+    // Önce çevrimiçi durumunu güncelle
+    if (user) {
+      await updateOnlineStatus(user.id, false);
+    }
+    
+    const { success, error } = await signOut();
+    if (success) {
+      setUser(null);
+    }
+    return { success, error };
+  } catch (error) {
+    return { success: false, error };
+  }
+};
+
+// sayfa yenilendiğinde veya kapatıldığında çevrimdışı durumunu ayarlayalım
+useEffect(() => {
+  const handleBeforeUnload = () => {
+    if (user) {
+      updateOnlineStatus(user.id, false);
     }
   };
+  
+  window.addEventListener('beforeunload', handleBeforeUnload);
+  
+  return () => {
+    window.removeEventListener('beforeunload', handleBeforeUnload);
+  };
+}, [user]);
 
   return (
     <AuthContext.Provider value={{ user, loading, login, register, logout }}>

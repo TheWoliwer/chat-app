@@ -9,6 +9,8 @@ import { getUserConversations } from '@/lib/chat';
 import { useAuth } from '../context/AuthContext';
 import { Conversation, Profile } from '@/lib/supabase';
 
+const [unreadCounts, setUnreadCounts] = useState<{[key: string]: number}>({});
+
 interface ConversationListProps {
   onConversationSelected?: () => void;
 }
@@ -26,12 +28,27 @@ export default function ConversationList({ onConversationSelected }: Conversatio
         setLoading(true);
         const { conversations } = await getUserConversations(user.id);
         setConversations(conversations as Conversation[]);
+        
+        // Her konuşma için okunmamış mesaj sayısını al
+        const counts: {[key: string]: number} = {};
+        for (const conversation of conversations) {
+          const { count } = await getUnreadMessagesCount(conversation.id, user.id);
+          counts[conversation.id] = count || 0;
+        }
+        setUnreadCounts(counts);
+        
         setLoading(false);
       }
     }
-
+  
     loadConversations();
   }, [user]);
+
+  {unreadCounts[conversation.id] > 0 && (
+    <div className="ml-2 px-2 py-0.5 rounded-full bg-primary text-white text-xs">
+      {unreadCounts[conversation.id]}
+    </div>
+  )}
 
   function getConversationName(conversation: Conversation) {
     if (!conversation.participants || !user) return 'Yeni Sohbet';

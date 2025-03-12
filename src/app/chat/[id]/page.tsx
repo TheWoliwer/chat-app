@@ -8,6 +8,10 @@ import MessageInput from '@/app/components/MessageInput';
 import { Profile } from '@/lib/supabase';
 import { supabase } from '@/lib/supabase';
 
+const [onlineStatuses, setOnlineStatuses] = useState<{[key: string]: boolean}>({});
+const [lastSeenTimes, setLastSeenTimes] = useState<{[key: string]: string}>({});
+
+
 export default function ChatDetailPage() {
   const { id } = useParams();
   const { user } = useAuth();
