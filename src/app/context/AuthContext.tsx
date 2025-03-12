@@ -25,6 +25,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Kullanıcı bilgilerini yükle
   useEffect(() => {
     async function loadUser() {
       try {
@@ -32,7 +33,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (user) {
           setUser(user as User);
           // Kullanıcı oturumu varsa, çevrimiçi durumunu güncelle
-          await updateOnlineStatus(user.id, true);
+          if (typeof window !== 'undefined') {
+            await updateOnlineStatus(user.id, true);
+          }
         }
       } catch (error) {
         console.error('Kullanıcı bilgisi alınamadı', error);
@@ -44,6 +47,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loadUser();
   }, []);
 
+  // Çevrimiçi durumu izle ve sayfa kapandığında/yenilendiğinde güncelleştir
+  useEffect(() => {
+    // Bu kodu sadece client tarafında çalıştır
+    if (typeof window === 'undefined' || !user) return;
+    
+    const handleBeforeUnload = () => {
+      if (user) {
+        updateOnlineStatus(user.id, false);
+      }
+    };
+    
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      // Komponent unmount olduğunda da çevrimdışı olarak işaretle
+      if (user) {
+        updateOnlineStatus(user.id, false);
+      }
+    };
+  }, [user]);
+
   const login = async (email: string, password: string) => {
     try {
       const { success, user, error } = await signIn(email, password);
@@ -52,7 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(fullUser as User);
         
         // Çevrimiçi durumunu güncelle
-        if (fullUser) {
+        if (fullUser && typeof window !== 'undefined') {
           await updateOnlineStatus(fullUser.id, true);
         }
       }
@@ -74,7 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     try {
       // Önce çevrimiçi durumunu güncelle
-      if (user) {
+      if (user && typeof window !== 'undefined') {
         await updateOnlineStatus(user.id, false);
       }
       
@@ -87,23 +112,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { success: false, error };
     }
   };
-
-  // sayfa yenilendiğinde veya kapatıldığında çevrimdışı durumunu ayarlayalım
-  useEffect(() => {
-    const handleBeforeUnload = () => {
-      if (user) {
-        updateOnlineStatus(user.id, false);
-      }
-    };
-    
-    if (typeof window !== 'undefined') {
-      window.addEventListener('beforeunload', handleBeforeUnload);
-      
-      return () => {
-        window.removeEventListener('beforeunload', handleBeforeUnload);
-      };
-    }
-  }, [user]);
 
   return (
     <AuthContext.Provider value={{ user, loading, login, register, logout }}>

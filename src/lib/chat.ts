@@ -250,6 +250,8 @@ export async function searchUsers(query: string, currentUserId: string) {
 
 // Gerçek zamanlı mesaj aboneliği
 export function subscribeToMessages(conversationId: string, callback: (message: Message) => void) {
+  if (typeof window === 'undefined') return { unsubscribe: () => {} };
+  
   return supabase
     .channel(`messages:${conversationId}`)
     .on(
@@ -278,6 +280,8 @@ export function subscribeToMessages(conversationId: string, callback: (message: 
 
 // Yazma durumunu paylaşma ve dinleme
 export async function updateTypingStatus(conversationId: string, profileId: string, isTyping: boolean) {
+  if (typeof window === 'undefined') return { success: true };
+  
   try {
     // Gerçek zamanlı olarak "typing_status" kanalına mesaj gönderiyoruz
     await supabase
@@ -301,6 +305,8 @@ export async function updateTypingStatus(conversationId: string, profileId: stri
 
 // Yazma durumunu dinlemek için
 export function subscribeToTypingStatus(conversationId: string, callback: (status: {profile_id: string, is_typing: boolean}) => void) {
+  if (typeof window === 'undefined') return { unsubscribe: () => {} };
+  
   return supabase
     .channel(`typing:${conversationId}`)
     .on('broadcast', { event: 'typing' }, (payload) => {
@@ -413,6 +419,8 @@ export async function getReplyMessage(messageId: string) {
 // Çevrimiçi durumunu güncelleme
 export async function updateOnlineStatus(profileId: string, isOnline: boolean) {
   try {
+    if (typeof window === 'undefined') return { success: true };
+    
     const { data, error } = await supabase
       .from('profiles')
       .update({ 
@@ -431,6 +439,10 @@ export async function updateOnlineStatus(profileId: string, isOnline: boolean) {
 
 // Çevrimiçi durumlarını dinleme
 export function subscribeToOnlineStatus(profileIds: string[], callback: (status: {profile_id: string, online_status: boolean, last_seen_at: string}) => void) {
+  if (typeof window === 'undefined' || !Array.isArray(profileIds) || profileIds.length === 0) {
+    return { unsubscribe: () => {} };
+  }
+  
   return supabase
     .channel('online-status')
     .on(
