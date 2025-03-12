@@ -7,6 +7,7 @@ import { getConversationMessages, subscribeToMessages, subscribeToTypingStatus, 
 import { useAuth } from '../context/AuthContext';
 import { Message, Profile } from '@/lib/supabase';
 import ReplyMessagePreview from './ReplyMessagePreview';
+import MessageInput from './MessageInput'; // MessageInput bileşenini import ettik
 
 interface MessageListProps {
   conversationId: string;
