@@ -101,7 +101,7 @@ export default function ConversationList({ onConversationSelected }: Conversatio
   }
 
   return (
-    <div className="overflow-y-auto">
+    <div className="h-full overflow-y-auto">
       {conversations.length === 0 ? (
         <div className="p-4 text-center text-gray-500">
           <p>Henüz sohbet yok</p>

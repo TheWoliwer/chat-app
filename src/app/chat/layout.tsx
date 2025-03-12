@@ -77,16 +77,16 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
         }
         
         .h-screen-custom {
+          height: 100vh; /* Fallback */
           height: calc(var(--vh, 1vh) * 100);
         }
         
         /* Taşma sorununun önüne geçmek için */
         html, body {
           overscroll-behavior: none;
-          overflow: hidden;
-          position: fixed;
-          width: 100%;
           height: 100%;
+          width: 100%;
+          overflow: hidden;
         }
         
         /* Safari için ekstra düzeltme */
@@ -110,7 +110,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
         <div 
           className={`bg-card border-r border-default fixed md:static inset-y-0 left-0 z-30 w-80 transform ${
             isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
-          } transition-transform duration-200 ease-in-out`}
+          } transition-transform duration-200 ease-in-out flex flex-col h-full`}
           onClick={handleSidebarClick}
         >
           <div className="p-4 border-b border-default flex items-center justify-between">
@@ -149,7 +149,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
               }}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
               </svg>
             </button>
           </div>
@@ -178,11 +178,13 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
           )}
 
           {/* Konuşma Listesi */}
-          <ConversationList onConversationSelected={() => setIsSidebarOpen(false)} />
+          <div className="flex-1 overflow-y-auto">
+            <ConversationList onConversationSelected={() => setIsSidebarOpen(false)} />
+          </div>
         </div>
 
         {/* Ana İçerik */}
-        <div className="flex-1 flex flex-col relative md:ml-0 w-full md:w-auto overflow-hidden">
+        <div className="flex-1 flex flex-col md:ml-80 w-full md:w-auto overflow-hidden">
           {/* Mobil başlık ve menü butonu - Sabit pozisyonda */}
           {isInChatDetailPage && (
             <div className="md:hidden flex items-center p-3 border-b border-default bg-card sticky top-0 z-10">

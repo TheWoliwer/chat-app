@@ -149,7 +149,7 @@ export default function MessageList({ conversationId, onReplyTo, replyToMessage 
 
   return (
     <div 
-      className="flex-1 p-4 overflow-y-auto relative" 
+      className="flex-1 p-4 overflow-y-auto" 
       ref={containerRef}
       onScroll={handleScroll}
     >
@@ -192,7 +192,6 @@ export default function MessageList({ conversationId, onReplyTo, replyToMessage 
                         {message.profile.full_name || message.profile.username}
                       </div>
                     )}
-                    
                     {/* Dosya eki varsa */}
                     {message.attachment_url && (
                       <div className="mb-2">
