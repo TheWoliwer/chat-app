@@ -7,6 +7,7 @@ import MessageList from '@/app/components/MessageList';
 import MessageInput from '@/app/components/MessageInput';
 import { Profile } from '@/lib/supabase';
 import { supabase } from '@/lib/supabase';
+import { Message } from '@/lib/supabase';
 
 export default function ChatDetailPage() {
   const { id } = useParams();
@@ -16,6 +17,7 @@ export default function ChatDetailPage() {
   const [showParticipants, setShowParticipants] = useState(false);
   const [onlineStatuses, setOnlineStatuses] = useState<{[key: string]: boolean}>({});
   const [lastSeenTimes, setLastSeenTimes] = useState<{[key: string]: string}>({});
+  const [replyToMessage, setReplyToMessage] = useState<Message | null>(null);
   const conversationId = Array.isArray(id) ? id[0] : id;
 
   // Başka bir şey tıklandığında katılımcı menüsünü kapat
@@ -93,6 +95,11 @@ export default function ChatDetailPage() {
   const toggleParticipantsMenu = (e: React.MouseEvent) => {
     e.stopPropagation();
     setShowParticipants(!showParticipants);
+  };
+
+  // Yanıt mesajını ayarlamak için handler
+  const handleReplyTo = (message: Message | null) => {
+    setReplyToMessage(message);
   };
 
   return (
@@ -182,8 +189,19 @@ export default function ChatDetailPage() {
         )}
       </div>
 
-      <MessageList conversationId={conversationId} />
-      <MessageInput conversationId={conversationId} />
+      <div className="flex-1 flex flex-col relative">
+        <MessageList 
+          conversationId={conversationId} 
+          onReplyTo={handleReplyTo}
+          replyToMessage={replyToMessage}
+        />
+        
+        <MessageInput 
+          conversationId={conversationId} 
+          replyTo={replyToMessage} 
+          onCancelReply={() => setReplyToMessage(null)}
+        />
+      </div>
     </div>
   );
 }
