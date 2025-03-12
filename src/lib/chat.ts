@@ -32,6 +32,7 @@ export async function createConversation(participantIds: string[]) {
 }
 
 // Kullanıcının tüm konuşmalarını getirme
+
 export async function getUserConversations(userId: string) {
   try {
     // Önce kullanıcının katıldığı konuşma ID'lerini al
@@ -57,14 +58,26 @@ export async function getUserConversations(userId: string) {
 
     if (conversationsError) throw conversationsError;
 
-    // Her konuşma için katılımcıları ve son mesajı al
+    // Her konuşma için katılımcıları ve son mesajı ayrı ayrı al
     const conversationsWithDetails = await Promise.all(
       conversations.map(async (conversation) => {
-        // Katılımcıları al
-        const { data: participants } = await supabase
+        // Katılımcı ID'lerini getir
+        const { data: participantsData } = await supabase
           .from('conversation_participants')
-          .select('profile_id, profiles:profile_id(*)')
+          .select('profile_id')
           .eq('conversation_id', conversation.id);
+          
+        // Bu ID'leri kullanarak profilleri getir
+        let participants = [];
+        if (participantsData && participantsData.length > 0) {
+          const profileIds = participantsData.map(p => p.profile_id);
+          const { data: profilesData } = await supabase
+            .from('profiles')
+            .select('*')
+            .in('id', profileIds);
+            
+          participants = profilesData || [];
+        }
 
         // Son mesajı al
         const { data: lastMessage } = await supabase
@@ -77,7 +90,7 @@ export async function getUserConversations(userId: string) {
 
         return {
           ...conversation,
-          participants: participants?.map(p => p.profiles),
+          participants,
           last_message: lastMessage
         };
       })
@@ -178,14 +191,14 @@ export function subscribeToMessages(conversationId: string, callback: (message: 
       async (payload) => {
         const newMessage = payload.new as Message;
         
-        // Mesajın profil bilgilerini al
+        // Mesajın profil bilgilerini ayrı bir sorgu ile al
         const { data: profile } = await supabase
           .from('profiles')
-          .select('*')
+          .select('id, username, full_name, avatar_url')
           .eq('id', newMessage.profile_id)
           .single();
           
-        callback({ ...newMessage, profile: profile as unknown as Profile });
+        callback({ ...newMessage, profile: profile as Profile });
       }
     )
     .subscribe();

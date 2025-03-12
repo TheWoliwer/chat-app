@@ -5,7 +5,7 @@ import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
 import { getConversationMessages, subscribeToMessages } from '@/lib/chat';
 import { useAuth } from '../context/AuthContext';
-import { Message } from '@/lib/supabase';
+import { Message, Profile } from '@/lib/supabase';
 
 interface MessageListProps {
   conversationId: string;

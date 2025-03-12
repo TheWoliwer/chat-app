@@ -21,24 +21,30 @@ export default function ChatDetailPage() {
         setLoading(true);
         
         try {
-          const { data, error } = await supabase
+          // İlk olarak, yalnızca katılımcı ID'lerini getir
+          const { data: participantData, error: participantError } = await supabase
             .from('conversation_participants')
-            .select(`
-              profile_id,
-              profiles:profile_id (
-                id, username, full_name, avatar_url
-              )
-            `)
+            .select('profile_id')
             .eq('conversation_id', conversationId);
 
-          if (error) throw error;
+          if (participantError) throw participantError;
 
-          if (data) {
-            const participantProfiles = data
-              .map(item => item.profiles as Profile)
-              .filter(Boolean);
+          if (participantData && participantData.length > 0) {
+            // Sonra ayrı bir sorgu ile profil bilgilerini al
+            const profileIds = participantData.map(item => item.profile_id);
             
-            setParticipants(participantProfiles);
+            const { data: profileData, error: profileError } = await supabase
+              .from('profiles')
+              .select('id, username, full_name, avatar_url')
+              .in('id', profileIds);
+
+            if (profileError) throw profileError;
+            
+            if (profileData) {
+              setParticipants(profileData);
+            }
+          } else {
+            setParticipants([]);
           }
         } catch (error) {
           console.error('Katılımcılar alınırken hata:', error);
