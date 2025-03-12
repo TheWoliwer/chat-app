@@ -8,16 +8,14 @@ import MessageInput from '@/app/components/MessageInput';
 import { Profile } from '@/lib/supabase';
 import { supabase } from '@/lib/supabase';
 
-const [onlineStatuses, setOnlineStatuses] = useState<{[key: string]: boolean}>({});
-const [lastSeenTimes, setLastSeenTimes] = useState<{[key: string]: string}>({});
-
-
 export default function ChatDetailPage() {
   const { id } = useParams();
   const { user } = useAuth();
   const [participants, setParticipants] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [showParticipants, setShowParticipants] = useState(false);
+  const [onlineStatuses, setOnlineStatuses] = useState<{[key: string]: boolean}>({});
+  const [lastSeenTimes, setLastSeenTimes] = useState<{[key: string]: string}>({});
   const conversationId = Array.isArray(id) ? id[0] : id;
 
   // Başka bir şey tıklandığında katılımcı menüsünü kapat
