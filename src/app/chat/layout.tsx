@@ -34,14 +34,70 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Mobil cihazlarda klavye açıldığında sayfanın yüksekliğini düzeltmek için
+  useEffect(() => {
+    const handleResize = () => {
+      // iOS için viewport yüksekliğini ayarla
+      if (typeof window !== 'undefined') {
+        document.documentElement.style.setProperty(
+          '--vh', 
+          `${window.innerHeight * 0.01}px`
+        );
+      }
+    };
+
+    // İlk yükleme ve resize olaylarında çalıştır
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    
+    // iOS'ta klavye açıldığında resize olayı tetiklenir
+    window.addEventListener('orientationchange', handleResize);
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
+    };
+  }, []);
+
   const handleLogout = async () => {
     await logout();
     router.push('/login');
   };
 
+  // Tıklama yayılımını engelle (event bubbling)
+  const handleSidebarClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
+
   return (
     <ProtectedRoute>
-      <div className="flex h-screen bg-background">
+      <style jsx global>{`
+        :root {
+          --vh: 1vh; /* Fallback */
+        }
+        
+        .h-screen-custom {
+          height: calc(var(--vh, 1vh) * 100);
+        }
+        
+        /* Taşma sorununun önüne geçmek için */
+        html, body {
+          overscroll-behavior: none;
+          overflow: hidden;
+          position: fixed;
+          width: 100%;
+          height: 100%;
+        }
+        
+        /* Safari için ekstra düzeltme */
+        @supports (-webkit-touch-callout: none) {
+          .h-screen-custom {
+            height: -webkit-fill-available;
+          }
+        }
+      `}</style>
+    
+      <div className="flex h-screen-custom bg-background">
         {/* Mobil yan çubuk arka planı */}
         {isSidebarOpen && (
           <div 
@@ -55,6 +111,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
           className={`bg-card border-r border-default fixed md:static inset-y-0 left-0 z-30 w-80 transform ${
             isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
           } transition-transform duration-200 ease-in-out`}
+          onClick={handleSidebarClick}
         >
           <div className="p-4 border-b border-default flex items-center justify-between">
             <h1 className="text-xl font-semibold">Sohbetler</h1>
@@ -70,7 +127,10 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
                 </svg>
               </Link>
               <button
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsMenuOpen(!isMenuOpen);
+                }}
                 className="inline-flex items-center p-2 text-sm bg-muted-background text-foreground rounded-full hover:bg-muted"
                 title="Menü"
               >
@@ -83,7 +143,10 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
             {/* Sadece mobilde görünür kapatma butonu */}
             <button 
               className="md:hidden ml-2 p-2 text-sm rounded-full"
-              onClick={() => setIsSidebarOpen(false)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsSidebarOpen(false);
+              }}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -93,7 +156,10 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
 
           {/* Açılır Menü */}
           {isMenuOpen && (
-            <div className="absolute right-4 mt-2 w-56 rounded-md shadow-lg bg-card ring-1 ring-border z-40">
+            <div 
+              className="absolute right-4 mt-2 w-56 rounded-md shadow-lg bg-card ring-1 ring-border z-40"
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="py-1" role="menu" aria-orientation="vertical">
                 <div className="px-4 py-2 text-sm text-foreground">
                   <p className="font-medium">{user?.profile?.full_name || user?.profile?.username}</p>
@@ -116,7 +182,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
         </div>
 
         {/* Ana İçerik */}
-        <div className="flex-1 flex flex-col relative md:ml-0 w-full md:w-auto">
+        <div className="flex-1 flex flex-col relative md:ml-0 w-full md:w-auto overflow-hidden">
           {/* Mobil başlık ve menü butonu - Sabit pozisyonda */}
           {isInChatDetailPage && (
             <div className="md:hidden flex items-center p-3 border-b border-default bg-card sticky top-0 z-10">
@@ -128,7 +194,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
                   <path fillRule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
                 </svg>
               </button>
-              <h1 className="text-lg font-medium ml-2">Chat Uygulaması</h1>
+              <h1 className="text-lg font-medium ml-2">Şevin❤️Doğukan Chat</h1>
             </div>
           )}
           

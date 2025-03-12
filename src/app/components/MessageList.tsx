@@ -22,7 +22,9 @@ export default function MessageList({ conversationId }: MessageListProps) {
   const [replyToMessage, setReplyToMessage] = useState<Message | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [shouldScrollToBottom, setShouldScrollToBottom] = useState(true);
 
+  // Mesajları yükleme fonksiyonu
   useEffect(() => {
     async function loadMessages() {
       if (conversationId && user) {
@@ -43,6 +45,8 @@ export default function MessageList({ conversationId }: MessageListProps) {
         await markAllConversationMessagesAsRead(conversationId, user.id);
         
         setLoading(false);
+        // Mesajlar yüklendiğinde otomatik olarak en aşağıya kaydırılmalı
+        setShouldScrollToBottom(true);
       }
     }
 
@@ -55,6 +59,15 @@ export default function MessageList({ conversationId }: MessageListProps) {
       // Eğer mesaj bize geliyorsa ve biz göndermediyse, okundu olarak işaretle
       if (newMessage.profile_id !== user?.id && user) {
         markAllConversationMessagesAsRead(conversationId, user.id);
+      }
+      
+      // Yeni mesaj geldiğinde scroll pozisyonunu belirlemek için
+      if (containerRef.current) {
+        const container = containerRef.current;
+        // Kullanıcı zaten en alttaysa veya kendisi mesaj gönderiyorsa otomatik scroll yap
+        const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+        const isOwnMessage = newMessage.profile_id === user?.id;
+        setShouldScrollToBottom(isNearBottom || isOwnMessage);
       }
     });
 
@@ -81,10 +94,24 @@ export default function MessageList({ conversationId }: MessageListProps) {
     };
   }, [conversationId, user]);
 
-  // Yeni mesaj geldiğinde otomatik scroll
+  // Scroll işleme - Geliştirilmiş sürüm
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    if (shouldScrollToBottom && messagesEndRef.current) {
+      // requestAnimationFrame ile daha güvenilir scroll işlemi
+      requestAnimationFrame(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      });
+    }
+  }, [messages, shouldScrollToBottom]);
+
+  // Kullanıcı scroll yaptığında
+  const handleScroll = () => {
+    if (containerRef.current) {
+      const container = containerRef.current;
+      const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+      setShouldScrollToBottom(isNearBottom);
+    }
+  };
 
   function formatMessageTime(dateString: string) {
     return format(new Date(dateString), 'HH:mm', { locale: tr });
@@ -110,7 +137,7 @@ export default function MessageList({ conversationId }: MessageListProps) {
 
   if (loading) {
     return (
-      <div className="flex-1 p-4 overflow-y-auto" ref={containerRef}>
+      <div className="flex-1 p-4 overflow-y-auto">
         <div className="animate-pulse space-y-4">
           {[1, 2, 3].map((i) => (
             <div key={i} className="h-10 bg-muted-background rounded w-3/4"></div>
@@ -121,8 +148,12 @@ export default function MessageList({ conversationId }: MessageListProps) {
   }
 
   return (
-    <div className="flex-1 flex flex-col">
-      <div className="flex-1 p-4 overflow-y-auto" ref={containerRef}>
+    <div className="flex-1 flex flex-col h-full">
+      <div 
+        className="flex-1 p-4 overflow-y-auto relative" 
+        ref={containerRef}
+        onScroll={handleScroll}
+      >
         {messages.length === 0 ? (
           <div className="h-full flex items-center justify-center">
             <p className="text-muted">Henüz mesaj yok. Sohbeti başlatmak için bir mesaj gönderin.</p>
@@ -225,7 +256,6 @@ export default function MessageList({ conversationId }: MessageListProps) {
                 </div>
               );
             })}
-            <div ref={messagesEndRef} />
             
             {/* Yazıyor göstergesi */}
             {typingUsers.size > 0 && (
@@ -263,6 +293,9 @@ export default function MessageList({ conversationId }: MessageListProps) {
                 </div>
               </div>
             )}
+            
+            {/* Mesaj sonu referansı - scroll işlemi için */}
+            <div ref={messagesEndRef} />
           </div>
         )}
       </div>

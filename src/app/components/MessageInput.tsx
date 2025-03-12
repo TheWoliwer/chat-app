@@ -31,6 +31,40 @@ export default function MessageInput({
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const messageInputContainerRef = useRef<HTMLDivElement>(null);
+
+  // iOS için klavye davranışını yönet
+  useEffect(() => {
+    // Yalnızca iOS cihazlarda çalışacak
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    
+    if (isIOS) {
+      const handleFocus = () => {
+        // Klavye açıldığında biraz gecikme ile scroll
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          document.body.scrollTop = 0;
+        }, 100);
+      };
+      
+      const handleBlur = () => {
+        // Klavye kapandığında scroll konumunu sıfırla
+        window.scrollTo(0, 0);
+      };
+      
+      if (inputRef.current) {
+        inputRef.current.addEventListener('focus', handleFocus);
+        inputRef.current.addEventListener('blur', handleBlur);
+        
+        return () => {
+          if (inputRef.current) {
+            inputRef.current.removeEventListener('focus', handleFocus);
+            inputRef.current.removeEventListener('blur', handleBlur);
+          }
+        };
+      }
+    }
+  }, []);
 
   // Dosya seçildiğinde
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -115,6 +149,7 @@ export default function MessageInput({
     }
   };
 
+  // Mesaj gönderme işlemi
   async function handleSendMessage(e: React.FormEvent) {
     e.preventDefault();
 
@@ -175,7 +210,10 @@ export default function MessageInput({
   }
 
   return (
-    <div className="sticky bottom-0 bg-card border-t border-default w-full z-10">
+    <div 
+      className="sticky bottom-0 bg-card border-t border-default w-full z-10"
+      ref={messageInputContainerRef}
+    >
       {/* Yanıt göstergesi */}
       {replyTo && (
         <div className="flex items-center justify-between px-4 py-2 bg-muted-background">
