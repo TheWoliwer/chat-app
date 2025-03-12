@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import ProtectedRoute from '../components/ProtectedRoute';
 import { useAuth } from '../context/AuthContext';
 import ConversationList from '../components/ConversationList';
@@ -10,10 +10,19 @@ import ConversationList from '../components/ConversationList';
 export default function ChatLayout({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
   const router = useRouter();
+  const pathname = usePathname(); // Mevcut yolu almak için
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  
+  // Mesaj detay sayfasında olup olmadığımızı kontrol et
+  const isInChatDetailPage = /^\/chat\/[^\/]+$/.test(pathname || '');
+  
+  // Sayfalar arası geçişlerde yan menüyü kapat
+  useEffect(() => {
+    setIsSidebarOpen(false);
+  }, [pathname]);
 
-  // Ekran büyüdüğünde yan çubuğu kapat
+  // Ekran boyutu değiştiğinde yan çubuğu kapat
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth >= 768) {
@@ -41,7 +50,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
           />
         )}
 
-        {/* Yan çubuk */}
+        {/* Yan çubuk - Daima görünür ve sabit */}
         <div 
           className={`bg-card border-r border-default fixed md:static inset-y-0 left-0 z-30 w-80 transform ${
             isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
@@ -52,8 +61,9 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
             <div className="flex space-x-2">
               <Link
                 href="/chat/new"
-                className="inline-flex items-center p-2 text-sm bg-muted-background text-foreground rounded-full hover:bg-muted"
+                className="inline-flex items-center p-2 text-sm bg-primary text-white rounded-full hover:bg-primary-hover"
                 title="Yeni sohbet"
+                onClick={() => setIsSidebarOpen(false)}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
@@ -70,7 +80,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
               </button>
             </div>
             
-            {/* Sadece mobilde görünür */}
+            {/* Sadece mobilde görünür kapatma butonu */}
             <button 
               className="md:hidden ml-2 p-2 text-sm rounded-full"
               onClick={() => setIsSidebarOpen(false)}
@@ -102,23 +112,25 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
           )}
 
           {/* Konuşma Listesi */}
-          <ConversationList />
+          <ConversationList onConversationSelected={() => setIsSidebarOpen(false)} />
         </div>
 
         {/* Ana İçerik */}
         <div className="flex-1 flex flex-col relative md:ml-0 w-full md:w-auto">
-          {/* Mobil başlık ve menü butonu */}
-          <div className="md:hidden flex items-center p-3 border-b border-default bg-card">
-            <button 
-              className="p-2 rounded-full"
-              onClick={() => setIsSidebarOpen(true)}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
-              </svg>
-            </button>
-            <h1 className="text-lg font-medium ml-2">Chat Uygulaması</h1>
-          </div>
+          {/* Mobil başlık ve menü butonu - Sabit pozisyonda */}
+          {isInChatDetailPage && (
+            <div className="md:hidden flex items-center p-3 border-b border-default bg-card sticky top-0 z-10">
+              <button 
+                className="p-2 rounded-full"
+                onClick={() => setIsSidebarOpen(true)}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
+                </svg>
+              </button>
+              <h1 className="text-lg font-medium ml-2">Chat Uygulaması</h1>
+            </div>
+          )}
           
           {children}
         </div>

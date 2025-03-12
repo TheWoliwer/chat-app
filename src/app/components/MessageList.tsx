@@ -16,6 +16,7 @@ export default function MessageList({ conversationId }: MessageListProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     async function loadMessages() {
@@ -50,10 +51,10 @@ export default function MessageList({ conversationId }: MessageListProps) {
 
   if (loading) {
     return (
-      <div className="flex-1 p-4">
+      <div className="flex-1 p-4 overflow-y-auto" ref={containerRef}>
         <div className="animate-pulse space-y-4">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-10 bg-gray-200 rounded w-3/4"></div>
+            <div key={i} className="h-10 bg-muted-background rounded w-3/4"></div>
           ))}
         </div>
       </div>
@@ -61,13 +62,13 @@ export default function MessageList({ conversationId }: MessageListProps) {
   }
 
   return (
-    <div className="flex-1 p-4 overflow-y-auto">
+    <div className="flex-1 p-4 overflow-y-auto" ref={containerRef}>
       {messages.length === 0 ? (
         <div className="h-full flex items-center justify-center">
-          <p className="text-gray-500">Henüz mesaj yok. Sohbeti başlatmak için bir mesaj gönderin.</p>
+          <p className="text-muted">Henüz mesaj yok. Sohbeti başlatmak için bir mesaj gönderin.</p>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-4 pb-2">
           {messages.map((message) => {
             const isMyMessage = message.profile_id === user?.id;
 
@@ -79,8 +80,8 @@ export default function MessageList({ conversationId }: MessageListProps) {
                 <div
                   className={`max-w-xs sm:max-w-md px-4 py-2 rounded-lg ${
                     isMyMessage
-                      ? 'bg-blue-500 text-white rounded-br-none'
-                      : 'bg-gray-200 text-gray-900 rounded-bl-none'
+                      ? 'bg-primary text-white rounded-br-none'
+                      : 'bg-muted-background text-foreground rounded-bl-none'
                   }`}
                 >
                   {!isMyMessage && message.profile && (
@@ -91,7 +92,7 @@ export default function MessageList({ conversationId }: MessageListProps) {
                   <div>{message.content}</div>
                   <div
                     className={`text-xs mt-1 text-right ${
-                      isMyMessage ? 'text-blue-100' : 'text-gray-500'
+                      isMyMessage ? 'text-white opacity-75' : 'text-muted'
                     }`}
                   >
                     {formatMessageTime(message.created_at)}

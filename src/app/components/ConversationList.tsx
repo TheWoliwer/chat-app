@@ -2,14 +2,21 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter, usePathname } from 'next/navigation';
 import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
 import { getUserConversations } from '@/lib/chat';
 import { useAuth } from '../context/AuthContext';
 import { Conversation, Profile } from '@/lib/supabase';
 
-export default function ConversationList() {
+interface ConversationListProps {
+  onConversationSelected?: () => void;
+}
+
+export default function ConversationList({ onConversationSelected }: ConversationListProps) {
   const { user } = useAuth();
+  const router = useRouter();
+  const pathname = usePathname();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -58,6 +65,19 @@ export default function ConversationList() {
     }
   }
 
+  // Konuşmaya tıklandığında yönlendirme ve callback
+  const handleConversationClick = (conversationId: string) => {
+    router.push(`/chat/${conversationId}`);
+    if (onConversationSelected) {
+      onConversationSelected();
+    }
+  };
+
+  // Aktif konuşmayı belirle
+  const isActiveConversation = (conversationId: string) => {
+    return pathname === `/chat/${conversationId}`;
+  };
+
   if (loading) {
     return (
       <div className="p-4">
@@ -75,38 +95,37 @@ export default function ConversationList() {
       {conversations.length === 0 ? (
         <div className="p-4 text-center text-gray-500">
           <p>Henüz sohbet yok</p>
-          <Link href="/chat/new" className="inline-block mt-2 text-blue-500 hover:text-blue-700">
+          <Link href="/chat/new" className="inline-block mt-2 text-primary hover:text-primary-hover">
             Yeni sohbet başlat
           </Link>
         </div>
       ) : (
         <ul className="divide-y divide-gray-200">
           {conversations.map((conversation) => (
-            <li key={conversation.id}>
-              <Link 
-                href={`/chat/${conversation.id}`}
-                className="block hover:bg-gray-50"
-              >
-                <div className="px-4 py-4 sm:px-6">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium text-blue-600 truncate">
-                      {getConversationName(conversation)}
-                    </p>
-                    {conversation.last_message && (
-                      <div className="ml-2 flex-shrink-0 flex">
-                        <p className="px-2 text-xs text-gray-500">
-                          {formatDate(conversation.last_message.created_at)}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                  <div className="mt-1">
-                    <p className="text-sm text-gray-600 truncate">
-                      {getLastMessagePreview(conversation)}
-                    </p>
-                  </div>
+            <li 
+              key={conversation.id}
+              onClick={() => handleConversationClick(conversation.id)}
+              className={`cursor-pointer ${isActiveConversation(conversation.id) ? 'bg-primary-light' : 'hover:bg-muted-background'}`}
+            >
+              <div className="px-4 py-4 sm:px-6">
+                <div className="flex items-center justify-between">
+                  <p className={`text-sm font-medium ${isActiveConversation(conversation.id) ? 'text-primary' : 'text-blue-600'} truncate`}>
+                    {getConversationName(conversation)}
+                  </p>
+                  {conversation.last_message && (
+                    <div className="ml-2 flex-shrink-0 flex">
+                      <p className="px-2 text-xs text-gray-500">
+                        {formatDate(conversation.last_message.created_at)}
+                      </p>
+                    </div>
+                  )}
                 </div>
-              </Link>
+                <div className="mt-1">
+                  <p className="text-sm text-gray-600 truncate">
+                    {getLastMessagePreview(conversation)}
+                  </p>
+                </div>
+              </div>
             </li>
           ))}
         </ul>

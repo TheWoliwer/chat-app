@@ -16,6 +16,20 @@ export default function ChatDetailPage() {
   const [showParticipants, setShowParticipants] = useState(false);
   const conversationId = Array.isArray(id) ? id[0] : id;
 
+  // Başka bir şey tıklandığında katılımcı menüsünü kapat
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showParticipants) {
+        setShowParticipants(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showParticipants]);
+
   useEffect(() => {
     async function fetchParticipants() {
       if (user && conversationId) {
@@ -73,9 +87,15 @@ export default function ChatDetailPage() {
     return `${otherParticipants[0].username} ve ${otherParticipants.length - 1} kişi daha`;
   }
 
+  // Katılımcılar menüsünü açma
+  const toggleParticipantsMenu = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowParticipants(!showParticipants);
+  };
+
   return (
     <div className="flex-1 flex flex-col h-full">
-      <div className="p-3 md:p-4 border-b border-default flex items-center bg-card">
+      <div className="p-3 md:p-4 border-b border-default flex items-center bg-card sticky top-0 z-10">
         <h1 className="text-lg md:text-xl font-semibold">{getConversationTitle()}</h1>
         
         {participants.length > 1 && (
@@ -111,7 +131,7 @@ export default function ChatDetailPage() {
             </div>
             
             <button 
-              onClick={() => setShowParticipants(!showParticipants)}
+              onClick={toggleParticipantsMenu}
               className="ml-2 p-2 text-muted hover:text-foreground rounded-full"
             >
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-5 h-5">
@@ -121,7 +141,10 @@ export default function ChatDetailPage() {
             
             {/* Katılımcılar açılır menüsü */}
             {showParticipants && (
-              <div className="absolute right-4 top-16 w-60 bg-card rounded-md shadow-lg border border-border z-10">
+              <div 
+                className="absolute right-4 top-16 w-60 bg-card rounded-md shadow-lg border border-border z-20"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <div className="p-2">
                   <h3 className="text-sm font-medium p-2">Katılımcılar</h3>
                   <ul className="mt-1 max-h-60 overflow-y-auto">
