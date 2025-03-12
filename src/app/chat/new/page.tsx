@@ -15,6 +15,9 @@ export default function NewChatPage() {
   const [error, setError] = useState('');
 
   const handleSelectUser = (selectedUser: Profile) => {
+    // Aynı kullanıcı zaten seçili mi kontrol et
+    if (selectedUsers.some(u => u.id === selectedUser.id)) return;
+    
     setSelectedUsers([...selectedUsers, selectedUser]);
   };
 

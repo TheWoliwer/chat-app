@@ -32,7 +32,6 @@ export async function createConversation(participantIds: string[]) {
 }
 
 // Kullanıcının tüm konuşmalarını getirme
-
 export async function getUserConversations(userId: string) {
   try {
     // Önce kullanıcının katıldığı konuşma ID'lerini al
@@ -153,6 +152,79 @@ export async function sendMessage(conversationId: string, profileId: string, con
     return { success: true, message };
   } catch (error) {
     console.error('Mesaj gönderilirken hata:', error);
+    return { success: false, error };
+  }
+}
+
+// Dosya yükleme işlemi
+export async function uploadFile(file: File, userId: string) {
+  try {
+    // Benzersiz bir dosya adı oluştur
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${userId}_${Date.now()}.${fileExt}`;
+    const filePath = `uploads/${fileName}`;
+
+    // Dosyayı yükle
+    const { data, error } = await supabase.storage
+      .from('attachments')
+      .upload(filePath, file);
+
+    if (error) throw error;
+
+    // Yüklenen dosya için genel URL oluştur
+    const { data: urlData } = await supabase.storage
+      .from('attachments')
+      .getPublicUrl(filePath);
+
+    return { 
+      success: true, 
+      url: urlData.publicUrl, 
+      fileType: file.type, 
+      fileName: file.name 
+    };
+  } catch (error) {
+    console.error('Dosya yüklenirken hata:', error);
+    return { success: false, error };
+  }
+}
+
+// Dosya ile birlikte mesaj gönderme
+export async function sendMessageWithAttachment(
+  conversationId: string, 
+  profileId: string, 
+  content: string,
+  attachmentUrl: string,
+  attachmentType: string,
+  attachmentName: string
+) {
+  try {
+    // Mesajı ekle
+    const { data: message, error: messageError } = await supabase
+      .from('messages')
+      .insert({
+        conversation_id: conversationId,
+        profile_id: profileId,
+        content,
+        attachment_url: attachmentUrl,
+        attachment_type: attachmentType,
+        attachment_name: attachmentName
+      })
+      .select()
+      .single();
+
+    if (messageError) throw messageError;
+
+    // Konuşmanın updated_at zamanını güncelle
+    const { error: updateError } = await supabase
+      .from('conversations')
+      .update({ updated_at: new Date().toISOString() })
+      .eq('id', conversationId);
+
+    if (updateError) throw updateError;
+
+    return { success: true, message };
+  } catch (error) {
+    console.error('Dosyalı mesaj gönderilirken hata:', error);
     return { success: false, error };
   }
 }

@@ -5,11 +5,9 @@ import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
-import { getUserConversations } from '@/lib/chat';
+import { getUserConversations, getUnreadMessagesCount } from '@/lib/chat';
 import { useAuth } from '../context/AuthContext';
 import { Conversation, Profile } from '@/lib/supabase';
-
-const [unreadCounts, setUnreadCounts] = useState<{[key: string]: number}>({});
 
 interface ConversationListProps {
   onConversationSelected?: () => void;
@@ -21,6 +19,7 @@ export default function ConversationList({ onConversationSelected }: Conversatio
   const pathname = usePathname();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [unreadCounts, setUnreadCounts] = useState<{[key: string]: number}>({});
 
   useEffect(() => {
     async function loadConversations() {
@@ -43,12 +42,6 @@ export default function ConversationList({ onConversationSelected }: Conversatio
   
     loadConversations();
   }, [user]);
-
-  {unreadCounts[conversation.id] > 0 && (
-    <div className="ml-2 px-2 py-0.5 rounded-full bg-primary text-white text-xs">
-      {unreadCounts[conversation.id]}
-    </div>
-  )}
 
   function getConversationName(conversation: Conversation) {
     if (!conversation.participants || !user) return 'Yeni Sohbet';
@@ -129,13 +122,19 @@ export default function ConversationList({ onConversationSelected }: Conversatio
                   <p className={`text-sm font-medium ${isActiveConversation(conversation.id) ? 'text-primary' : 'text-blue-600'} truncate`}>
                     {getConversationName(conversation)}
                   </p>
-                  {conversation.last_message && (
-                    <div className="ml-2 flex-shrink-0 flex">
+                  <div className="ml-2 flex-shrink-0 flex items-center">
+                    {unreadCounts[conversation.id] > 0 && (
+                      <div className="mr-2 px-2 py-0.5 rounded-full bg-primary text-white text-xs">
+                        {unreadCounts[conversation.id]}
+                      </div>
+                    )}
+                    
+                    {conversation.last_message && (
                       <p className="px-2 text-xs text-gray-500">
                         {formatDate(conversation.last_message.created_at)}
                       </p>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
                 <div className="mt-1">
                   <p className="text-sm text-gray-600 truncate">

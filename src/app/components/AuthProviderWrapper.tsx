@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { AuthProvider } from '../context/AuthContext';
 
 function registerServiceWorker() {
-  if ('serviceWorker' in navigator && 'PushManager' in window) {
+  if (typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window) {
     navigator.serviceWorker
       .register('/service-worker.js')
       .then(registration => {
