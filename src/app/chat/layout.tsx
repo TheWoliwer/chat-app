@@ -184,8 +184,8 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
         </div>
 
         {/* Ana İçerik */}
-        <div className="flex-1 flex flex-col md:ml-80 w-full md:w-auto overflow-hidden">
-          {/* Mobil başlık ve menü butonu - Sabit pozisyonda */}
+        <div className="flex-1 flex flex-col md:ml-80 w-full max-w-full overflow-hidden">
+        {/* Mobil başlık ve menü butonu - Sabit pozisyonda */}
           {isInChatDetailPage && (
             <div className="md:hidden flex items-center p-3 border-b border-default bg-card sticky top-0 z-10">
               <button 

@@ -169,10 +169,14 @@ export default function MessageList({ conversationId, onReplyTo, replyToMessage 
               >
                 {/* Yanıt göstergesi */}
                 {message.reply_to_message_id && (
-                  <div className={`flex ${isMyMessage ? 'justify-end' : 'justify-start'} w-full mb-1`}>
-                    <div className={`max-w-xs sm:max-w-md px-3 py-1 rounded-md ${
-                      isMyMessage ? 'bg-primary/10 text-primary' : 'bg-muted-background/50 text-muted'
-                    } text-xs`}>
+                  <div className={`flex w-full ${isMyMessage ? 'justify-end' : 'justify-start'}`}>
+                  <div
+                    className={`max-w-xs sm:max-w-md px-4 py-2 rounded-lg message-bubble relative ${
+                      isMyMessage
+                        ? 'bg-primary text-white rounded-br-none'
+                        : 'bg-muted-background text-foreground rounded-bl-none'
+                    }`}
+                  >
                       <ReplyMessagePreview messageId={message.reply_to_message_id} />
                     </div>
                   </div>

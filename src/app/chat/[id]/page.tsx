@@ -103,7 +103,7 @@ export default function ChatDetailPage() {
   };
 
   return (
-    <div className="flex-1 flex flex-col h-full overflow-hidden">
+    <div className="flex-1 flex flex-col h-full overflow-hidden w-full">
       <div className="p-3 md:p-4 border-b border-default flex items-center bg-card sticky top-0 z-10">
         <h1 className="text-lg md:text-xl font-semibold">{getConversationTitle()}</h1>
         

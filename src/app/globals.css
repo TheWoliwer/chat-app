@@ -232,3 +232,30 @@ body {
     opacity: 0;
   }
 }
+
+/* Hover ve transition efektleri */
+.hover-scale {
+  transition: transform 0.2s ease-in-out;
+}
+.hover-scale:hover {
+  transform: scale(1.05);
+}
+
+/* Mesaj balonu efektleri */
+.message-bubble {
+  transition: box-shadow 0.2s ease;
+}
+.message-bubble:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Button hover efektleri */
+button {
+  transition: all 0.2s ease;
+}
+
+/* Input focus efektleri */
+input:focus {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 0 0 2px var(--primary-light);
+}
