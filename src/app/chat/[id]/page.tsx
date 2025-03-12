@@ -13,6 +13,7 @@ export default function ChatDetailPage() {
   const { user } = useAuth();
   const [participants, setParticipants] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showParticipants, setShowParticipants] = useState(false);
   const conversationId = Array.isArray(id) ? id[0] : id;
 
   useEffect(() => {
@@ -21,7 +22,7 @@ export default function ChatDetailPage() {
         setLoading(true);
         
         try {
-          // İlk olarak, yalnızca katılımcı ID'lerini getir
+          // Önce yalnızca katılımcı ID'lerini getir
           const { data: participantData, error: participantError } = await supabase
             .from('conversation_participants')
             .select('profile_id')
@@ -73,36 +74,83 @@ export default function ChatDetailPage() {
   }
 
   return (
-    <div className="flex-1 flex flex-col">
-      <div className="p-4 border-b flex items-center">
-        <h1 className="text-xl font-semibold">{getConversationTitle()}</h1>
+    <div className="flex-1 flex flex-col h-full">
+      <div className="p-3 md:p-4 border-b border-default flex items-center bg-card">
+        <h1 className="text-lg md:text-xl font-semibold">{getConversationTitle()}</h1>
+        
         {participants.length > 1 && (
-          <div className="ml-auto flex">
-            {participants
-              .filter(p => p.id !== user?.id)
-              .slice(0, 3)
-              .map((participant) => (
-                <div 
-                  key={participant.id} 
-                  className="flex-shrink-0 -ml-2 first:ml-0 h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center border-2 border-white"
-                  title={participant.full_name || participant.username}
-                >
-                  {participant.avatar_url ? (
-                    <img
-                      src={participant.avatar_url}
-                      alt={participant.username}
-                      className="h-full w-full rounded-full object-cover"
-                    />
-                  ) : (
-                    <span className="text-sm text-white">
-                      {participant.username.charAt(0).toUpperCase()}
-                    </span>
-                  )}
+          <div className="ml-auto flex items-center">
+            <div className="flex">
+              {participants
+                .filter(p => p.id !== user?.id)
+                .slice(0, 3)
+                .map((participant) => (
+                  <div 
+                    key={participant.id} 
+                    className="flex-shrink-0 -ml-2 first:ml-0 h-8 w-8 rounded-full bg-muted flex items-center justify-center border-2 border-background"
+                    title={participant.full_name || participant.username}
+                  >
+                    {participant.avatar_url ? (
+                      <img
+                        src={participant.avatar_url}
+                        alt={participant.username}
+                        className="h-full w-full rounded-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-sm">
+                        {participant.username.charAt(0).toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              {participants.length > 4 && (
+                <div className="flex-shrink-0 -ml-2 h-8 w-8 rounded-full bg-muted-background flex items-center justify-center border-2 border-background">
+                  <span className="text-xs text-muted">+{participants.length - 4}</span>
                 </div>
-              ))}
-            {participants.length > 4 && (
-              <div className="flex-shrink-0 -ml-2 h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center border-2 border-white">
-                <span className="text-xs text-gray-600">+{participants.length - 4}</span>
+              )}
+            </div>
+            
+            <button 
+              onClick={() => setShowParticipants(!showParticipants)}
+              className="ml-2 p-2 text-muted hover:text-foreground rounded-full"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-5 h-5">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16m-7 6h7" />
+              </svg>
+            </button>
+            
+            {/* Katılımcılar açılır menüsü */}
+            {showParticipants && (
+              <div className="absolute right-4 top-16 w-60 bg-card rounded-md shadow-lg border border-border z-10">
+                <div className="p-2">
+                  <h3 className="text-sm font-medium p-2">Katılımcılar</h3>
+                  <ul className="mt-1 max-h-60 overflow-y-auto">
+                    {participants.map((participant) => (
+                      <li key={participant.id} className="flex items-center p-2 hover:bg-muted-background rounded-md">
+                        <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
+                          {participant.avatar_url ? (
+                            <img
+                              src={participant.avatar_url}
+                              alt={participant.username}
+                              className="h-full w-full rounded-full object-cover"
+                            />
+                          ) : (
+                            <span className="text-sm">
+                              {participant.username.charAt(0).toUpperCase()}
+                            </span>
+                          )}
+                        </div>
+                        <div className="ml-2">
+                          <div className="text-sm font-medium">{participant.full_name || participant.username}</div>
+                          <div className="text-xs text-muted">@{participant.username}</div>
+                        </div>
+                        {participant.id === user?.id && (
+                          <span className="ml-auto text-xs bg-primary-light text-primary px-2 py-1 rounded-full">Sen</span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </div>
             )}
           </div>

@@ -31,24 +31,41 @@ export default function MessageInput({ conversationId }: MessageInputProps) {
   }
 
   return (
-    <form onSubmit={handleSendMessage} className="p-4 border-t">
-      <div className="flex items-center">
-        <input
-          type="text"
-          placeholder="Bir mesaj yazın..."
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          className="flex-1 border-gray-300 rounded-l-md focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-r-0 p-2"
-          disabled={sending}
-        />
-        <button
-          type="submit"
-          disabled={!message.trim() || sending}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-r-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          Gönder
-        </button>
-      </div>
-    </form>
+    <div className="sticky bottom-0 bg-card border-t border-default w-full">
+      <form onSubmit={handleSendMessage} className="p-2 md:p-4">
+        <div className="flex items-center rounded-full border border-border bg-input overflow-hidden shadow-sm">
+          <input
+            type="text"
+            placeholder="Bir mesaj yazın..."
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            className="flex-1 py-2 px-4 bg-transparent outline-none min-w-0"
+            disabled={sending}
+          />
+
+          {/* Dosya ekleme butonu */}
+          <button 
+            type="button" 
+            className="p-2 text-muted hover:text-foreground focus:outline-none"
+            title="Dosya ekle"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-5 h-5">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+            </svg>
+          </button>
+
+          <button
+            type="submit"
+            disabled={!message.trim() || sending}
+            className="btn-primary p-2 md:px-4 md:py-2 rounded-full mr-1 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+          >
+            <span className="hidden md:inline mr-1">Gönder</span>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-5 h-5">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 12h14M12 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+      </form>
+    </div>
   );
 }
