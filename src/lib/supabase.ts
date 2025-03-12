@@ -7,6 +7,11 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: {
     persistSession: true,
   },
+  realtime: {
+    params: {
+      eventsPerSecond: 5
+    }
+  }
 });
 
 // Tip tanımlamaları
